@@ -51,12 +51,12 @@ const obterListaDeProdutos = () => {
 
 
 // Pedidos
-// POST - criar nv
-// GET - Obter Inf :id
+// POST - criar nv FEITO!
+// GET - Obter Inf :id FEITO!
 // GET - Todos os produtos - Feito!
 // PUT - Atualizar pedido na lista de PRODUTOS :id
-// DELETE - deletar :id
-
+// DELETE - deletar :id FEITO!
+ 
 const obterListaDePedidos = () => {
     const listaSemDeletados = [];
 
@@ -92,6 +92,40 @@ const adicionarPedidos = (orders) => {
     return novoPedido;
 }
 
+const deleterPedido = (index) => {
+    const pedido = obterPedido(index);
+
+    if (pedido) {
+        pedidos.splice(index, 1);
+        return true;
+    } else {
+        return false;
+    }
+};
+
+const atualizarPedido = (index, estado) => {
+    const pedido = obterPedido(index);
+    
+    const pedidoAtualizado = {
+        id: pedido.id,
+        produtos: pedido.produto,
+        estado: estado,
+        idCliente: pedido.idCliente,
+        deletado: pedido.deletado,
+        valorTotal: pedido.valorTotal
+    }
+
+    console.log("Pedido Atualizado!");
+    console.log(pedidoAtualizado);
+
+    if (pedido){
+        pedidos.splice(index, 1, pedidoAtualizado);
+        return pedidoAtualizado;
+    } else {
+        return false;
+    }
+};
+
 server.use((ctx) =>{
     const path = ctx.url;
     const method = ctx.method;
@@ -101,7 +135,21 @@ server.use((ctx) =>{
         } else if (method === 'POST'){
           const novo = adicionarPedidos(ctx.request.body);
           ctx.body = novo;
-          console.log(novo);
+        } else if(method === "PUT"){
+            const index = ctx.request.body.index;
+            const estado = ctx.request.body.estado;
+            if (index && estado === true && estado === false) {
+                ctx.status = 400;
+                ctx.body = "Requisição mal formatada";
+            } else {
+                const resposta = atualizarPedido(index, estado);
+                if (resposta) {
+                    ctx.body = resposta;
+                } else {
+                    ctx.status = 404;
+                    ctx.body = resposta;
+                }
+            }
         }else{
             ctx.status = 404;
             ctx.body = 'Não encontrado!'
@@ -110,14 +158,24 @@ server.use((ctx) =>{
     } else if (path.includes("/orders/")) {
       const pathInd = path.split("/");
         if (pathInd[1] === "orders"){
-          const index = pathInd[2];
-          if (index) {
-            ctx.body = obterPedido(index);
-          } else {
-            ctx.status = 404;
-            ctx.body = "Não encontrado";
-
-          }
+            const index = pathInd[2];
+            if (index) {
+                if (method === "GET"){
+                        ctx.body = obterPedido(index);
+                  } else if (method === "DELETE"){
+                        const resposta = deleterPedido(index);
+                        if (resposta === true){
+                            ctx.body = ' Pedido deletado com sucesso! '
+                        } else {
+                            ctx.body = 'Não foi possível deletar pedido!'
+                        }
+                  } else {
+                        ctx.status = 404;
+                        ctx.body = "Não encontrado";
+        
+                    }
+            }
+         
         }       
     } 
     
